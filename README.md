@@ -1,104 +1,131 @@
-# Lab: Chain-of-Thought & ReAct Prompting
+# Lab: Structured Planning and Tool Use
 
----
+## Scenario
 
-## Table of Contents
+You are supporting Project Aurora, a fictional consulting engagement. The client
+is deciding whether to keep a tentative November 4 go-live date and which staffing
+option fits within the approved budget.
 
-* [Scenario / Background](#scenario--background)
-* [Objectives](#objectives)
-* [Task Overview](#task-overview)
-* [Requirements](#requirements)
-* [Data Guidance](#data-guidance)
-* [Deliverables](#deliverables)
-* [Steps & Recommendations](#steps--recommendations)
-* [Extension / Stretch Goals](#extension--stretch-goals)
-* [References & Resources](#references--resources)
+This lab is self-contained. All project facts, policy information, staffing data,
+and deterministic tools are included in the accompanying script. It does not
+depend on Day 2 Lab 1 or any other repository.
 
----
+## Learning objectives
 
-### Scenario / Background
+By completing this lab, you will be able to:
 
-As generative AI models become more capable, they can tackle multi‑step reasoning tasks such as planning museum exhibits, composing educational content or solving logic puzzles. Simply asking the model for an answer often produces shallow results. Research on *chain‑of‑thought* (CoT) prompting has shown that guiding a model to articulate intermediate reasoning steps dramatically improves performance on complex tasks. [See Google Research](https://research.google/pubs/towards-understanding-chain-of-thought-prompting-an-empirical-study-of-what-matters/#:~:text=Abstract)
+- Compare a direct-answer prompt with a prompt that requires a visible plan and
+  evidence list.
+- Define local tools with clear inputs and outputs.
+- Implement a model/tool loop that executes tool calls and returns observations to
+  the model.
+- Evaluate whether tool use improves factual accuracy and calculations.
+- Document observable plans, evidence, actions, tool results, final answers, and
+  caveats without treating private model reasoning as a required deliverable.
 
-A complementary technique, *ReAct*, interleaves **Re**asoning and **Act**ion steps, enabling the model to update its plan and interact with external tools (e.g., search engines or APIs); this helps reduce hallucinations and leads to more interpretable solutions. [See arXiv](https://arxiv.org/abs/2210.03629)
+## The two tasks
 
-In this lab you will practise both methods and combine them for robust multi‑step problem solving.
+### Task 1: Go-live recommendation
 
-### Objectives
+Answer this question:
 
-By the end of this lab you will be able to:
+> Should the client keep the November 4 go-live date?
 
-* **Formulate chain‑of‑thought prompts** that encourage the model to articulate intermediate reasoning steps when tackling complex tasks.
-  [Read Google Research](https://research.google/pubs/towards-understanding-chain-of-thought-prompting-an-empirical-study-of-what-matters/#:~:text=Abstract)
-* **Apply the ReAct paradigm** by alternating reasoning with external actions, such as querying a knowledge base or performing intermediate calculations, to obtain accurate and grounded outputs.
-  [See arXiv](https://arxiv.org/abs/2210.03629)
-* **Combine CoT and ReAct** for challenging multi‑step tasks, observing how structured reasoning and actionable queries complement each other.
-* **Practise task decomposition**, breaking down complex problems into smaller steps and guiding the model through each stage.
+The answer must use the project facts and go-live policy. A strong answer should
+identify the relevant evidence, state a recommendation, and explain what remains
+uncertain.
 
-### Task Overview
+### Task 2: Staffing cost analysis
 
-You will design prompts for at least two multi‑step tasks of your choice. Possible scenarios include crafting a descriptive overview of a museum exhibit using multiple information sources, solving a logic or mathematical puzzle, or creating a step‑by‑step guide for an educational concept. For each task you will:
+Compare the junior-heavy and specialist-heavy staffing options. Calculate the total
+cost of each option, including the stated contingency, and identify which option is
+within the approved budget.
 
-1. **Develop a baseline prompt** asking for the final answer without explicit reasoning.
-2. **Write a chain‑of‑thought prompt** that instructs the model to "think step by step" or "show its reasoning" before answering. Observe differences in output quality and completeness.
-   [See Google Research](https://research.google/pubs/towards-understanding-chain-of-thought-prompting-an-empirical-study-of-what-matters/#:~:text=Abstract)
-3. **Implement a ReAct prompt** that interleaves reasoning and actions. After each reasoning step, instruct the model to call a function, look up information or perform calculations. Provide mock results for external calls if necessary.
-   [See arXiv](https://arxiv.org/abs/2210.03629)
-4. **Combine CoT and ReAct** into one workflow, where the model uses chain‑of‑thought reasoning to plan and then executes actions to retrieve or verify information.
+The answer must use the staffing facts and the calculator tool rather than relying
+on unaudited mental arithmetic.
 
-### Requirements
+## Three prompt versions per task
 
-Your submission must include:
+For each task, produce these three versions:
 
-* **At least two distinct tasks**, each involving complex reasoning or multi‑step problem solving.
-* **Three versions per task**: baseline (no reasoning), chain‑of‑thought, and ReAct or combined CoT+ReAct.
-* **Documentation of reasoning chains** for CoT and ReAct versions, showing intermediate thoughts and actions.
-* **Reflection** on the effectiveness of chain‑of‑thought and ReAct techniques: discuss which methods yielded better results, challenges encountered, and potential improvements.
+1. **Baseline** — ask directly for the answer using the supplied context.
+2. **Structured plan** — require a short plan, relevant evidence, assumptions,
+   and a final answer, but do not use tools.
+3. **Tool use** — allow the model to call the supplied tools, record each action
+   and result, and then provide the final answer.
 
-### Data Guidance
+The tool-use version follows this observable workflow:
 
-This lab does not provide specific datasets. Choose or create your own short texts, logic puzzles, or scenarios for your tasks. For summarization or translation tasks, ensure you have both the source text and a reference answer if you wish to compare output quality. Suitable reference materials include:
+```text
+plan → tool call → tool result → final answer
+```
 
-* A paragraph or article to summarise (with a gold‑standard summary).
-* A short sentence or paragraph in a foreign language with its official translation.
+Do not submit unrestricted private chain-of-thought. Record only the concise plan,
+evidence, tool calls, observations, final answer, and caveats that a reviewer can
+verify.
 
-If you need to source data, search open platforms such as **Hugging Face Datasets**, **Kaggle**, or **data.gov**, which host a variety of datasets across domains.
-[Hugging Face Datasets](https://huggingface.co/docs/hub/en/datasets-overview#:~:text=Datasets%20on%20the%20Hub)
-[data.gov](https://data.gov/#:~:text=The%20Home%20of%20the%20U,Government%27s%20Open%20Data)
+## Included tools
 
-Choose datasets that include both input and reference outputs if you wish to manually assess output quality.
+The script provides three deterministic local tools:
 
-### Deliverables
+- `lookup_project_fact(key)` — retrieves a fact from the project packet.
+- `lookup_go_live_policy(topic)` — retrieves the decision policy.
+- `calculate_cost(hours, hourly_rate, contingency_percent)` — returns base cost,
+  contingency, and total cost.
 
-You should submit:
+The model does not execute Python directly. It requests a named tool with JSON
+arguments, and the local dispatcher executes only the allowed function.
 
-* A **notebook or Python script** implementing each task. Include prompts, model calls, and intermediate reasoning and actions.
-* A **short report or markdown file** summarizing each task: describe the problem, outline the prompts, present key outputs, and reflect on the results.
+## Deliverable
 
-### Steps & Recommendations
+Submit one notebook or Python script containing:
 
-1. **Choose your tasks.** Select two tasks requiring multiple reasoning steps (e.g., summarising a museum exhibit plan, solving a logic puzzle or constructing an educational lesson plan).
-2. **Write a baseline prompt.** Ask the model for the final answer without explicit reasoning. Save the output.
-3. **Craft a chain‑of‑thought prompt.** Instruct the model to think step by step, list intermediate steps or rationales. Research from Google notes that chain‑of‑thought prompts can dramatically improve reasoning performance.
-   [See Google Research](https://research.google/pubs/towards-understanding-chain-of-thought-prompting-an-empirical-study-of-what-matters/#:~:text=Abstract)
-4. **Implement ReAct prompts.** Alternate reasoning steps with explicit actions. For example, after explaining what information is needed, instruct the model to call a search function or look up facts. Provide mock or real responses for actions. ReAct integrates reasoning and action to reduce hallucinations and improve interpretability.
-   [See arXiv](https://arxiv.org/abs/2210.03629)
-5. **Combine CoT and ReAct.** Build a prompt that uses chain‑of‑thought to plan the solution and ReAct to perform retrieval or calculations at appropriate times.
-6. **Reflect.** Discuss which prompting strategy produced the best reasoning or most accurate result. Consider whether chain‑of‑thought alone sufficed or whether ReAct helped gather external information. Note any limitations or potential improvements.
+- The two task prompts and all three versions for each task.
+- The model parameters used for each run.
+- The observable tool-call trace for tool-use versions.
+- The final outputs and a short reflection for each task.
+- A comparison of factual accuracy, calculation accuracy, unsupported claims, and
+  usefulness to the client.
 
-### Extension / Stretch Goals
+Use a table like this for your comparison:
 
-* **Few‑shot prompting:** Provide one or two examples of solved tasks in your prompt to see if it improves reasoning.
-* **Tool integration:** Explore integrating simple external tools (e.g., a Wikipedia API or a calculator) into your ReAct workflows. Document how the model uses these tools and whether they enhance performance.
-* **Comparison across models:** Evaluate prompts using different models (e.g., GPT‑4o vs. smaller models like OPT‑1.3B) and compare reasoning quality and hallucination rates.
-  [OPT-1.3B on HuggingFace](https://huggingface.co/facebook/opt-1.3b#:~:text=,models%20are%20available%20for%20study)
+| Version | Correct facts | Correct calculations | Unsupported claims | Useful to client |
+|---|---|---|---|---|
+| Baseline |  |  |  |  |
+| Structured plan |  |  |  |  |
+| Tool use |  |  |  |  |
 
-### References & Resources
+## Running the example
 
-* **Chain‑of‑Thought prompting -- Google research**: explains that encouraging models to produce intermediate rationales can significantly improve multi‑step reasoning.
-  [Google Research](https://research.google/pubs/towards-understanding-chain-of-thought-prompting-an-empirical-study-of-what-matters/#:~:text=Abstract)
-* **ReAct: Synergizing reasoning and acting**: describes the ReAct paradigm, which interleaves reasoning traces with actions to reduce hallucinations and improve task‑solving.
-  [arXiv](https://arxiv.org/abs/2210.03629)
-* **Hugging Face datasets**, **Kaggle**, **data.gov**: offer a variety of datasets for summarization, translation and other tasks.
-  [Hugging Face Datasets](https://huggingface.co/docs/hub/en/datasets-overview#:~:text=Datasets%20on%20the%20Hub)
-  [data.gov](https://data.gov/#:~:text=The%20Home%20of%20the%20U,Government%27s%20Open%20Data)
+The solution script runs one hardcoded experiment per process to avoid
+exhausting a free-tier request quota. Edit `MODEL_NAME`, `SELECTED_TASK`, and
+`SELECTED_VERSION` at the top of the solution file to choose a different
+experiment or model.
+
+For Gemini's OpenAI-compatible endpoint:
+
+```bash
+pip install openai
+export GEMINI_API_KEY="your-key"
+python SOLUTION_structured_tool_use.py
+```
+
+The Gemini endpoint configuration follows [Google's OpenAI compatibility
+guide](https://ai.google.dev/gemini-api/docs/openai). The tool-call message shape
+follows the [OpenAI Chat Completions API reference](https://developers.openai.com/api/reference/cli/resources/chat).
+
+## Reflection questions
+
+- Did the baseline answer use unsupported assumptions?
+- Did the structured-plan version identify the right evidence without tools?
+- Which tool calls were necessary, and did the model call them correctly?
+- Did the calculator change the staffing recommendation?
+- What would you verify before presenting the result to a client?
+
+## Optional extensions
+
+- Add a tool that retrieves a project fact by category rather than exact key.
+- Add a third staffing option and compare all three.
+- Run each prompt multiple times and compare variation.
+- Add a deliberately incomplete fact and require the model to state what is
+  unknown instead of guessing.
