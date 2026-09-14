@@ -1,5 +1,14 @@
 # Lab: Structured Planning and Tool Use
 
+> **Environment reminder:** Use a separate Python 3.11 environment for this lab.
+> From this directory, run:
+>
+> ```bash
+> python3.11 -m venv .venv
+> source .venv/bin/activate
+> python -m pip install --upgrade pip
+> ```
+
 ## Scenario
 
 You are supporting Project Aurora, a fictional consulting engagement. The client
