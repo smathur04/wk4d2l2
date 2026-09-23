@@ -2,7 +2,7 @@ import json
 from openai import OpenAI
 
 API_KEY = ""
-MODEL_NAME = "gemini-1.5-pro"
+MODEL_NAME = "gemini-3.5-pro"
 SELECTED_TASK = "go_live"       # "go_live" or "staffing"
 SELECTED_VERSION = "tool_use"   # "baseline", "structured_plan", or "tool_use"
 
